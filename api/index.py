@@ -85,16 +85,22 @@ app = Flask(__name__)
 
 
 @app.route("/")
-def handler():
-    data = get_data_balance()
-    response = jsonify(data)
+def index():
+    """データ残量を取得するメインエンドポイント"""
+    try:
+        data = get_data_balance()
+        response = jsonify(data)
 
-    # CORS設定（iPhoneのScriptableからアクセス可能にする）
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        # CORS設定（iPhoneのScriptableからアクセス可能にする）
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
 
-    return response
+        return response
+    except Exception as e:
+        error_response = jsonify({"error": f"サーバーエラー: {str(e)}"})
+        error_response.headers["Access-Control-Allow-Origin"] = "*"
+        return error_response, 500
 
 
 # --- ローカル開発用 ---
