@@ -87,7 +87,14 @@ app = Flask(__name__)
 @app.route("/")
 def handler():
     data = get_data_balance()
-    return jsonify(data)
+    response = jsonify(data)
+
+    # CORS設定（iPhoneのScriptableからアクセス可能にする）
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+
+    return response
 
 
 # --- ローカル開発用 ---
