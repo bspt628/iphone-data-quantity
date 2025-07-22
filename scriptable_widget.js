@@ -1,6 +1,6 @@
-// HISモバイル データ残量ウィジェット (円グラフ付き)
+// HISモバイル データ残量ウィジェット (プログレスバー付き)
 // VercelにデプロイしたAPIエンドポイントのURLに変更してください
-const API_URL = "https://your-project-name.vercel.app/"; // ★ここを実際のVercelURLに変更
+const API_URL = "https://iphone-data-quantity-lau8.vercel.app/"; // ★ここを実際のVercelURLに変更
 
 // データプラン容量設定 (MB単位)
 const TOTAL_DATA_MB = 7000; // 7GB = 7000MB (お客様のプランに合わせて変更)
@@ -29,43 +29,37 @@ async function fetchDataBalance() {
 	}
 }
 
-// 円グラフを描画
-function drawCircularProgress(drawContext, rect, progress, color) {
-	const centerX = rect.width / 2;
-	const centerY = rect.height / 2;
-	const radius = Math.min(centerX, centerY) - 10;
-	const lineWidth = 8;
+// プログレスバーを描画（Scriptable対応・確実に動作）
+function drawProgressBar(drawContext, rect, progress, color) {
+	const textWidth = 40; // パーセンテージ表示用の幅を確保
+	const barWidth = rect.width - textWidth - 15; // プログレスバーの幅を調整
+	const barHeight = 12;
+	const barX = 5;
+	const barY = rect.height / 2 - barHeight / 2;
 
-	// 背景円
-	drawContext.setStrokeColor(new Color("#E5E5EA", 0.3));
-	drawContext.setLineWidth(lineWidth);
-	drawContext.strokeEllipse(
-		new Rect(centerX - radius, centerY - radius, radius * 2, radius * 2)
-	);
+	// 背景バー（薄いグレー）
+	drawContext.setFillColor(new Color("#E5E5EA"));
+	drawContext.fillRect(new Rect(barX, barY, barWidth, barHeight));
 
-	// プログレス円（使用量）
-	if (progress > 0) {
-		drawContext.setStrokeColor(color);
-		drawContext.setLineWidth(lineWidth);
-
-		const path = new Path();
-		const startAngle = -Math.PI / 2; // 12時方向から開始
-		const endAngle = startAngle + 2 * Math.PI * progress;
-
-		path.addArc(centerX, centerY, radius, startAngle, endAngle, false);
-		drawContext.addPath(path);
-		drawContext.strokePath();
+	// プログレスバー（色付き）
+	if (progress > 0 && progress <= 1) {
+		drawContext.setFillColor(color);
+		const progressWidth = barWidth * progress;
+		drawContext.fillRect(new Rect(barX, barY, progressWidth, barHeight));
 	}
 
-	// 中央にパーセンテージ表示
-	drawContext.setTextAlignedCenter();
+	// パーセンテージをプログレスバーの右側に表示
+	drawContext.setTextAlignedLeft();
 	drawContext.setTextColor(new Color("#000000"));
-	drawContext.setFont(Font.boldSystemFont(18));
+	drawContext.setFont(Font.boldSystemFont(14));
 
-	const percentText = Math.round(progress * 100) + "%";
+	const percentText = `${Math.round(progress * 100)}%`;
+	const textX = barX + barWidth + 8; // プログレスバーの右側に配置
+	const textY = barY - 2; // バーと同じ高さに配置
+
 	drawContext.drawTextInRect(
 		percentText,
-		new Rect(centerX - 30, centerY - 10, 60, 20)
+		new Rect(textX, textY, textWidth, barHeight + 4)
 	);
 }
 
@@ -98,10 +92,10 @@ async function createWidget() {
 
 	widget.addSpacer(8);
 
-	// 円グラフ描画エリア
-	const progressRect = new Rect(0, 0, 120, 120);
+	// プログレスバー描画エリア
+	const progressRect = new Rect(0, 0, 120, 40);
 	const drawContext = new DrawContext();
-	drawContext.size = new Size(120, 120);
+	drawContext.size = new Size(120, 40);
 	drawContext.respectScreenScale = true;
 
 	// 使用量を計算 (残量から使用量を逆算)
@@ -119,7 +113,7 @@ async function createWidget() {
 		progressColor = new Color("#FF3B30"); // 赤 (警告)
 	}
 
-	drawCircularProgress(drawContext, progressRect, usageProgress, progressColor);
+	drawProgressBar(drawContext, progressRect, usageProgress, progressColor);
 
 	const progressImage = drawContext.getImage();
 	const imageWidget = widget.addImage(progressImage);

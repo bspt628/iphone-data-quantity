@@ -2,6 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import pytz
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 
@@ -68,9 +69,13 @@ def get_data_balance():
             )
 
             if data_element:
+                # 日本時間（JST）で現在時刻を取得
+                jst = pytz.timezone("Asia/Tokyo")
+                now_jst = datetime.datetime.now(jst)
+
                 return {
                     "balance": data_element.get_text(strip=True),
-                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "time": now_jst.strftime("%Y-%m-%d %H:%M"),
                 }
             else:
                 return {
