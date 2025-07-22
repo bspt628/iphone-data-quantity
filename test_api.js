@@ -5,6 +5,7 @@ const https = require("https");
 
 // 設定
 const API_URL = "https://iphone-data-quantity-lau8.vercel.app/";
+const API_PASSWORD = "secure_api_key_2025"; // ★実際のパスワードに変更
 const TOTAL_DATA_MB = 7000; // 7GB
 
 // APIからデータを取得（Node.js版）
@@ -12,9 +13,12 @@ async function fetchDataBalance() {
 	return new Promise((resolve, reject) => {
 		console.log("🔄 APIを呼び出し中...");
 		console.log(`📡 URL: ${API_URL}`);
+		
+		const authenticatedURL = `${API_URL}?password=${encodeURIComponent(API_PASSWORD)}`;
+		console.log(`🔐 認証URL: ${authenticatedURL}`);
 
 		https
-			.get(API_URL, (res) => {
+			.get(authenticatedURL, (res) => {
 				let data = "";
 
 				res.on("data", (chunk) => {

@@ -2,13 +2,21 @@
 // VercelにデプロイしたAPIエンドポイントのURLに変更してください
 const API_URL = "https://iphone-data-quantity-lau8.vercel.app/"; // ★ここを実際のVercelURLに変更
 
+// API認証パスワード (★重要: 実際のパスワードに変更してください)
+const API_PASSWORD = "secure_api_key_2025"; // ★Vercelで設定したAPI_PASSWORDと同じ値
+
 // データプラン容量設定 (MB単位)
 const TOTAL_DATA_MB = 7000; // 7GB = 7000MB (お客様のプランに合わせて変更)
 
-// APIからデータを取得
+// APIからデータを取得（認証付き）
 async function fetchDataBalance() {
 	try {
-		const request = new Request(API_URL);
+		// パスワード認証付きのURL構築
+		const authenticatedURL = `${API_URL}?password=${encodeURIComponent(
+			API_PASSWORD
+		)}`;
+
+		const request = new Request(authenticatedURL);
 		const response = await request.loadJSON();
 
 		if (response.error) {

@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 import pytz
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 
 # .envファイルから環境変数を読み込む
@@ -89,17 +89,55 @@ def get_data_balance():
 app = Flask(__name__)
 
 
+def check_auth():
+    """API認証チェック"""
+    # 環境変数からAPIパスワードを取得
+    api_password = os.environ.get("API_PASSWORD")
+
+    if not api_password:
+        return False, "APIパスワードが設定されていません"
+
+    # クエリパラメータからパスワードを取得
+    provided_password = request.args.get("password")
+
+    # ヘッダーからの認証も対応
+    if not provided_password:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            provided_password = auth_header.replace("Bearer ", "")
+
+    if not provided_password:
+        return (
+            False,
+            "パスワードが必要です。?password=YOUR_PASSWORD または Authorization: Bearer YOUR_PASSWORD を指定してください",
+        )
+
+    if provided_password != api_password:
+        return False, "パスワードが正しくありません"
+
+    return True, None
+
+
 @app.route("/")
 def index():
-    """データ残量を取得するメインエンドポイント"""
+    """データ残量を取得するメインエンドポイント（パスワード認証付き）"""
     try:
+        # 認証チェック
+        is_authenticated, auth_error = check_auth()
+
+        if not is_authenticated:
+            error_response = jsonify({"error": auth_error})
+            error_response.headers["Access-Control-Allow-Origin"] = "*"
+            return error_response, 401  # 認証エラー
+
+        # 認証成功時のみデータ取得を実行
         data = get_data_balance()
         response = jsonify(data)
 
         # CORS設定（iPhoneのScriptableからアクセス可能にする）
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "GET"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
 
         return response
     except Exception as e:
